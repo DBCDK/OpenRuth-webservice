@@ -110,6 +110,7 @@ class openRuth extends webServiceServer {
         $this->watch->stop('zsearch');
         if ($err = $z->get_errno()) {
           $res->userError->_value = 'cannot reach local system - (' . $err . ')';
+          verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') z-errno: ' . $err . ' ' . $z->get_error_string());
         } elseif (empty($hits))
           $res->userError->_value = 'No counters found';
         else {
@@ -182,10 +183,11 @@ class openRuth extends webServiceServer {
           $this->watch->stop('zsearch');
 //echo 'hits: ' . $hits . "\n";
           if ($hits > 1)
-            verbose::log(ERROR, 'holdings(' . __LINE__ . '):: More than one hits searching for id: ' . $pid . ' and agency: ' . $agencyId);
+            verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . '):: More than one hits searching for id: ' . $pid . ' and agency: ' . $agencyId);
 //echo 'err: ' . $z->get_errno() . "\n";
           if ($err = $z->get_errno()) {
             $res->agencyError->_value = 'cannot reach local system - (' . $err . ')';
+            verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') z-errno: ' . $err . ' ' . $z->get_error_string());
           } elseif (empty($hits))
             $res->agencyError->_value = 'No holdings found';
           else {
@@ -329,6 +331,7 @@ class openRuth extends webServiceServer {
 //echo 'err: ' . $z->get_errno() . "\n";
         if ($err = $z->get_errno()) {
           $res->bookingError->_value = 'cannot reach local system - (' . $err . ')';
+          verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') z-errno: ' . $err . ' ' . $z->get_error_string());
         } elseif (empty($hits))
           $res->bookingError->_value = 'No booking found';
         else {
@@ -351,7 +354,7 @@ class openRuth extends webServiceServer {
               unset($rbc);
             }
           } else {
-            verbose::log(ERROR, 'order (' . __LINE__ . ') loadXML error of: ' . $xml_ret['xmlUpdateDoc']);
+            verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') loadXML error of: ' . $xml_ret['xmlUpdateDoc']);
             $res->bookingError->_value = 'undefined error';
           }
         }
@@ -404,11 +407,11 @@ class openRuth extends webServiceServer {
           $dom->preserveWhiteSpace = false;
           if ($dom->loadXML($xml_ret['xmlUpdateDoc'])) {
             if ($err = $dom->getElementsByTagName('ErrorResponse')->item(0)) {
-              verbose::log(ERROR, 'book (' . __LINE__ . ') errno: ' . $err->getAttribute('Err'));
+              verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') errno: ' . $err->getAttribute('Err'));
               if (!($res->bookingError->_value = $this->errs[$err->getAttribute('Err')])) 
                 $res->bookingError->_value = 'unspecified error (' . $err->getAttribute('Err') . '), order not possible';
             } elseif ($err = $dom->getElementsByTagName('Error')->item(0)->nodeValue) {
-              verbose::log(ERROR, 'book (' . __LINE__ . ') errno: ' . $err);
+              verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') errno: ' . $err);
               if (!($res->bookingError->_value = $this->errs[$err])) 
                 $res->bookingError->_value = 'unspecified error (' . $err . '), order not possible';
             } else {
@@ -423,11 +426,11 @@ class openRuth extends webServiceServer {
                 $res->bookingOk->_value->bookingEndDate->_value = $param->bookingEndDate->_value;
             }
           } else {
-            verbose::log(ERROR, 'book (' . __LINE__ . ') loadXML error of: ' . $xml_ret['xmlUpdateDoc']);
+            verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') loadXML error of: ' . $xml_ret['xmlUpdateDoc']);
             $res->bookingError->_value = 'system error';
           }
         } else {
-          verbose::log(ERROR, 'book (' . __LINE__ . ') z-errno: ' . $z->get_error_string());
+          verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') z-errno: ' . $z->get_errno() . ' ' . $z->get_error_string());
           $res->bookingError->_value = 'system error';
         }
       } else
@@ -477,11 +480,11 @@ class openRuth extends webServiceServer {
           $dom->preserveWhiteSpace = false;
           if ($dom->loadXML($xml_ret['xmlUpdateDoc'])) {
             if ($err = $dom->getElementsByTagName('ErrorResponse')->item(0)) {
-              verbose::log(ERROR, 'updateBook (' . __LINE__ . ') errno: ' . $err->getAttribute('Err'));
+              verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') errno: ' . $err->getAttribute('Err'));
               if (!($res->updateOrderError->_value = $this->errs[$err->getAttribute('Err')])) 
                 $res->updateOrderError->_value = 'unspecified error (' . $err->getAttribute('Err') . '), order not possible';
             } elseif ($err = $dom->getElementsByTagName('Error')->item(0)->nodeValue) {
-              verbose::log(ERROR, 'updateBook (' . __LINE__ . ') errno: ' . $err);
+              verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') errno: ' . $err);
               if (!($res->bookingError->_value = $this->errs[$err])) 
                 $res->bookingError->_value = 'unspecified error (' . $err . '), order not possible';
             } else {
@@ -496,11 +499,11 @@ class openRuth extends webServiceServer {
                 $res->bookingOk->_value->bookingEndDate->_value = $ed;
             }
           } else {
-            verbose::log(ERROR, 'updateBook (' . __LINE__ . ') loadXML error of: ' . $xml_ret['xmlUpdateDoc']);
+            verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') loadXML error of: ' . $xml_ret['xmlUpdateDoc']);
             $res->bookingError->_value = 'system error';
           }
         } else {
-          verbose::log(ERROR, 'updateBook (' . __LINE__ . ') z-errno: ' . $z->get_error_string());
+          verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') z-errno: ' . $z->get_errno() . ' ' . $z->get_error_string());
           $res->bookingError->_value = 'system error';
         }
       } else
@@ -545,18 +548,18 @@ class openRuth extends webServiceServer {
           $dom->preserveWhiteSpace = false;
           if ($dom->loadXML($xml_ret['xmlUpdateDoc'])) {
             if ($err = $dom->getElementsByTagName('ErrorResponse')->item(0)) {
-              verbose::log(ERROR, 'cancelBook (' . __LINE__ . ') errno: ' . $err->getAttribute('Err'));
+              verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') errno: ' . $err->getAttribute('Err'));
               if (!($res->bookingError->_value = $this->errs[$err->getAttribute('Err')])) 
                 $res->bookingError->_value = 'unspecified error (' . $err->getAttribute('Err') . '), order not possible';
             } else {
               $res->bookingOk->_value->bookingId->_value = $param->bookingId->_value;
             }
           } else {
-            verbose::log(ERROR, 'cancelBook (' . __LINE__ . ') loadXML error of: ' . $xml_ret['xmlUpdateDoc']);
+            verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') loadXML error of: ' . $xml_ret['xmlUpdateDoc']);
             $res->bookingError->_value = 'system error';
           }
         } else {
-          verbose::log(ERROR, 'cancelBook (' . __LINE__ . ') z-errno: ' . $z->get_error_string());
+          verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') z-errno: ' . $z->get_errno() . ' ' . $z->get_error_string());
           $res->bookingError->_value = 'system error';
         }
       } else
@@ -610,18 +613,18 @@ class openRuth extends webServiceServer {
           $dom->preserveWhiteSpace = false;
           if ($dom->loadXML($xml_ret['xmlUpdateDoc'])) {
             if ($err = $dom->getElementsByTagName('ReservationDeleteResponse')->item(0)->nodeValue) {
-              verbose::log(ERROR, 'cancelOrder (' . __LINE__ . ') errno: ' . $err);
+              verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') errno: ' . $err);
               if (!($res->cancelOrderError->_value = $this->errs[$err])) 
                 $res->cancelOrderError->_value = 'unspecified error (' . $err . '), order not possible';
             } else {
               $res->cancelOrderOk->_value = $param->orderId->_value;
             }
           } else {
-            verbose::log(ERROR, 'cancelOrder (' . __LINE__ . ') loadXML error of: ' . $xml_ret['xmlUpdateDoc']);
+            verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') loadXML error of: ' . $xml_ret['xmlUpdateDoc']);
             $res->cancelOrderError->_value = 'system error';
           }
         } else {
-          verbose::log(ERROR, 'cancelOrder (' . __LINE__ . ') z-errno: ' . $z->get_error_string());
+          verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') z-errno: ' . $z->get_errno() . ' ' . $z->get_error_string());
           $res->cancelOrderError->_value = 'system error';
         }
       } else
@@ -689,7 +692,7 @@ class openRuth extends webServiceServer {
           $dom->preserveWhiteSpace = false;
           if ($dom->loadXML($xml_ret['xmlUpdateDoc'])) {
             if ($err = &$dom->getElementsByTagName('ErrorResponse')->item(0)) {
-              verbose::log(ERROR, 'order (' . __LINE__ . ') errno: ' . $err->getAttribute('Err') . 
+              verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') errno: ' . $err->getAttribute('Err') . 
                                   ' error: ' . $err->nodeValue);
               $res->orderItemError->_value = 'unspecified error, order not possible';
             } else {
@@ -708,7 +711,7 @@ class openRuth extends webServiceServer {
             }
           }
         } else {
-          verbose::log(ERROR, 'order (' . __LINE__ . ') z-errno: ' . $z->get_error_string());
+          verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') z-errno: ' . $z->get_errno() . ' ' . $z->get_error_string());
           $res->orderItemError->_value = 'system error';
         }
 //echo "\n";
@@ -759,18 +762,18 @@ class openRuth extends webServiceServer {
           $dom->preserveWhiteSpace = false;
           if ($dom->loadXML($xml_ret['xmlUpdateDoc'])) {
             if ($err = $dom->getElementsByTagName('ErrorResponse')->item(0)) {
-              verbose::log(ERROR, 'updateOrder (' . __LINE__ . ') errno: ' . $err->getAttribute('Err'));
+              verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') errno: ' . $err->getAttribute('Err'));
               if (!($res->updateOrderError->_value = $this->errs[$err->getAttribute('Err')])) 
                 $res->updateOrderError->_value = 'unspecified error (' . $err->getAttribute('Err') . '), order not possible';
             } else {
               $res->updateOrderOk->_value = $param->orderId->_value;
             }
           } else {
-            verbose::log(ERROR, 'updateOrder (' . __LINE__ . ') loadXML error of: ' . $xml_ret['xmlUpdateDoc']);
+            verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') loadXML error of: ' . $xml_ret['xmlUpdateDoc']);
             $res->updateOrderError->_value = 'system error';
           }
         } else {
-          verbose::log(ERROR, 'updateOrder (' . __LINE__ . ') z-errno: ' . $z->get_error_string());
+          verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') z-errno: ' . $z->get_errno() . ' ' . $z->get_error_string());
           $res->updateOrderError->_value = 'system error';
         }
       } else
@@ -832,7 +835,7 @@ class openRuth extends webServiceServer {
           $dom->preserveWhiteSpace = false;
           if ($dom->loadXML($xml_ret['xmlUpdateDoc'])) {
             if ($err = $dom->getElementsByTagName('BorrowerError')->item(0)->nodeValue) {
-              verbose::log(ERROR, 'renew (' . __LINE__ . ') errno: ' . $err);
+              verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') errno: ' . $err);
               if (!($res->renewLoanError->_value = $this->errs[$err])) 
                 $res->renewLoanError->_value = 'unspecified error (' . $err . '), order not possible';
             } else {
@@ -847,11 +850,11 @@ class openRuth extends webServiceServer {
               }
             }
           } else {
-            verbose::log(ERROR, 'renew (' . __LINE__ . ') loadXML error of: ' . $xml_ret['xmlUpdateDoc']);
+            verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') loadXML error of: ' . $xml_ret['xmlUpdateDoc']);
             $res->renewLoanError->_value = 'system error';
           }
         } else {
-          verbose::log(ERROR, 'renew (' . __LINE__ . ') z-errno: ' . $z->get_error_string());
+          verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') z-errno: ' . $z->get_errno() . ' ' . $z->get_error_string());
           $res->renewLoanError->_value = 'system error';
         }
       } else
@@ -914,22 +917,22 @@ class openRuth extends webServiceServer {
           $dom->preserveWhiteSpace = false;
           if ($dom->loadXML($xml_ret['xmlUpdateDoc'])) {
             if ($err = $dom->getElementsByTagName('ErrorResponse')->item(0)) {
-              verbose::log(ERROR, 'updateUser (' . __LINE__ . ') errno: ' . $err->getAttribute('Err'));
+              verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') errno: ' . $err->getAttribute('Err'));
               if (!($res->userError->_value = $this->errs[$err->getAttribute('Err')])) 
                 $res->userError->_value = 'unspecified error (' . $err->getAttribute('Err') . '), user not updated';
             } elseif ($err = $dom->getElementsByTagName('BorrowerPinMailResponse')->item(0)->nodeValue) {
-              verbose::log(ERROR, 'updateUser (' . __LINE__ . ') errno: ' . $err);
+              verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') errno: ' . $err);
               if (!($res->userError->_value = $this->errs[$err])) 
                 $res->userError->_value = 'unspecified error (' . $err . '), user not updated';
             } else {
               $res->updateUserInfoOk->_value = 'true';
             }
           } else {
-            verbose::log(ERROR, 'updateUser (' . __LINE__ . ') loadXML error of: ' . $xml_ret['xmlUpdateDoc']);
+            verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') loadXML error of: ' . $xml_ret['xmlUpdateDoc']);
             $res->userError->_value = 'cannot decode answer';
           }
         } else {
-          verbose::log(ERROR, 'updateUser (' . __LINE__ . ') z-errno: ' . $z->get_error_string());
+          verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') z-errno: ' . $z->get_errno() . ' ' . $z->get_error_string());
           $res->userError->_value = 'cannot reach local system';
         }
       } else
@@ -971,6 +974,7 @@ class openRuth extends webServiceServer {
 //var_dump($hits);
 //var_dump($z->get_errno());
         if ($err = $z->get_errno()) {
+          verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') z-errno: ' . $err . ' ' . $z->get_error_string());
           $res->userError->_value = 'cannot reach local system - (' . $err . ')';
         } elseif (empty($hits))
           $res->userError->_value = 'unknown userId';
@@ -1048,18 +1052,18 @@ class openRuth extends webServiceServer {
           $dom->preserveWhiteSpace = false;
           if ($dom->loadXML('<?xml version="1.0" encoding="ISO-8859-1" ?'.'>'.$xml_ret['xmlUpdateDoc'])) {
             if ($err = $dom->getElementsByTagName('ErrorResponse')->item(0)) {
-              verbose::log(ERROR, 'userPayment (' . __LINE__ . ') errno: ' . $err->getAttribute('Err'));
+              verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') errno: ' . $err->getAttribute('Err'));
               if (!($res->userPaymentError->_value = $this->errs[$err->getAttribute('Err')])) 
                 $res->userPaymentError->_value = 'unspecified error (' . $err->getAttribute('Err') . '), order not possible';
             } else {
               $res->userPaymentOk->_value = 'true';
             }
           } else {
-            verbose::log(ERROR, 'userPayment (' . __LINE__ . ') loadXML error of: ' . $xml_ret['xmlUpdateDoc']);
+            verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') loadXML error of: ' . $xml_ret['xmlUpdateDoc']);
             $res->userPaymentError->_value = 'system error';
           }
         } else {
-          verbose::log(ERROR, 'userPayment (' . __LINE__ . ') z-errno: ' . $z->get_error_string());
+          verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') z-errno: ' . $z->get_errno() . ' ' . $z->get_error_string());
           $res->userPaymentError->_value = 'system error';
         }
       } else
@@ -1099,6 +1103,7 @@ class openRuth extends webServiceServer {
         $hits = $z->z3950_search($tgt['timeout']);
         $this->watch->stop('zsearch');
         if ($err = $z->get_errno()) {
+          verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') z-errno: ' . $err . ' ' . $z->get_error_string());
           if (!($res->userError->_value = $this->errs[$err])) 
             $res->userError->_value = 'cannot reach local system - (' . $err . ')';
         } elseif (empty($hits))
@@ -1355,6 +1360,7 @@ class openRuth extends webServiceServer {
         $hits = $z->z3950_search($tgt['timeout']);
         $this->watch->stop('zsearch');
         if ($err = $z->get_errno()) {
+          verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') z-errno: ' . $err . ' ' . $z->get_error_string());
           if (!($res->agencyError->_value = $this->errs[$err])) 
             $res->agencyError->_value = 'cannot reach local system - (' . $err . ')';
         } elseif (empty($hits)) {
