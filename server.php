@@ -110,7 +110,7 @@ class openRuth extends webServiceServer {
         $this->watch->stop('zsearch');
         if ($err = $z->get_errno()) {
           $res->userError->_value = 'cannot reach local system - (' . $err . ')';
-          verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') z-errno: ' . $err . ' ' . $z->get_error_string());
+          $this->log_z_error(__FUNCTION__, __LINE__, $agencyId, $err, $z->get_error_string());
         } elseif (empty($hits))
           $res->userError->_value = 'No counters found';
         else {
@@ -187,7 +187,7 @@ class openRuth extends webServiceServer {
 //echo 'err: ' . $z->get_errno() . "\n";
           if ($err = $z->get_errno()) {
             $res->agencyError->_value = 'cannot reach local system - (' . $err . ')';
-            verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') z-errno: ' . $err . ' ' . $z->get_error_string());
+            $this->log_z_error(__FUNCTION__, __LINE__, $agencyId, $err, $z->get_error_string());
           } elseif (empty($hits))
             $res->agencyError->_value = 'No holdings found';
           else {
@@ -331,7 +331,7 @@ class openRuth extends webServiceServer {
 //echo 'err: ' . $z->get_errno() . "\n";
         if ($err = $z->get_errno()) {
           $res->bookingError->_value = 'cannot reach local system - (' . $err . ')';
-          verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') z-errno: ' . $err . ' ' . $z->get_error_string());
+          $this->log_z_error(__FUNCTION__, __LINE__, $agencyId, $err, $z->get_error_string());
         } elseif (empty($hits))
           $res->bookingError->_value = 'No booking found';
         else {
@@ -430,7 +430,7 @@ class openRuth extends webServiceServer {
             $res->bookingError->_value = 'system error';
           }
         } else {
-          verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') z-errno: ' . $z->get_errno() . ' ' . $z->get_error_string());
+          $this->log_z_error(__FUNCTION__, __LINE__, $agencyId, $z->get_errno(), $z->get_error_string());
           $res->bookingError->_value = 'system error';
         }
       } else
@@ -503,7 +503,7 @@ class openRuth extends webServiceServer {
             $res->bookingError->_value = 'system error';
           }
         } else {
-          verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') z-errno: ' . $z->get_errno() . ' ' . $z->get_error_string());
+          $this->log_z_error(__FUNCTION__, __LINE__, $agencyId, $z->get_errno(), $z->get_error_string());
           $res->bookingError->_value = 'system error';
         }
       } else
@@ -559,7 +559,7 @@ class openRuth extends webServiceServer {
             $res->bookingError->_value = 'system error';
           }
         } else {
-          verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') z-errno: ' . $z->get_errno() . ' ' . $z->get_error_string());
+          $this->log_z_error(__FUNCTION__, __LINE__, $agencyId, $z->get_errno(), $z->get_error_string());
           $res->bookingError->_value = 'system error';
         }
       } else
@@ -624,7 +624,7 @@ class openRuth extends webServiceServer {
             $res->cancelOrderError->_value = 'system error';
           }
         } else {
-          verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') z-errno: ' . $z->get_errno() . ' ' . $z->get_error_string());
+          $this->log_z_error(__FUNCTION__, __LINE__, $agencyId, $z->get_errno(), $z->get_error_string());
           $res->cancelOrderError->_value = 'system error';
         }
       } else
@@ -711,7 +711,7 @@ class openRuth extends webServiceServer {
             }
           }
         } else {
-          verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') z-errno: ' . $z->get_errno() . ' ' . $z->get_error_string());
+          $this->log_z_error(__FUNCTION__, __LINE__, $agencyId, $z->get_errno(), $z->get_error_string());
           $res->orderItemError->_value = 'system error';
         }
 //echo "\n";
@@ -773,7 +773,7 @@ class openRuth extends webServiceServer {
             $res->updateOrderError->_value = 'system error';
           }
         } else {
-          verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') z-errno: ' . $z->get_errno() . ' ' . $z->get_error_string());
+          $this->log_z_error(__FUNCTION__, __LINE__, $agencyId, $z->get_errno(), $z->get_error_string());
           $res->updateOrderError->_value = 'system error';
         }
       } else
@@ -854,7 +854,7 @@ class openRuth extends webServiceServer {
             $res->renewLoanError->_value = 'system error';
           }
         } else {
-          verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') z-errno: ' . $z->get_errno() . ' ' . $z->get_error_string());
+          $this->log_z_error(__FUNCTION__, __LINE__, $agencyId, $z->get_errno(), $z->get_error_string());
           $res->renewLoanError->_value = 'system error';
         }
       } else
@@ -932,7 +932,7 @@ class openRuth extends webServiceServer {
             $res->userError->_value = 'cannot decode answer';
           }
         } else {
-          verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') z-errno: ' . $z->get_errno() . ' ' . $z->get_error_string());
+          $this->log_z_error(__FUNCTION__, __LINE__, $agencyId, $z->get_errno(), $z->get_error_string());
           $res->userError->_value = 'cannot reach local system';
         }
       } else
@@ -974,7 +974,7 @@ class openRuth extends webServiceServer {
 //var_dump($hits);
 //var_dump($z->get_errno());
         if ($err = $z->get_errno()) {
-          verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') z-errno: ' . $err . ' ' . $z->get_error_string());
+          $this->log_z_error(__FUNCTION__, __LINE__, $agencyId, $err, $z->get_error_string());
           $res->userError->_value = 'cannot reach local system - (' . $err . ')';
         } elseif (empty($hits))
           $res->userError->_value = 'unknown userId';
@@ -1063,7 +1063,7 @@ class openRuth extends webServiceServer {
             $res->userPaymentError->_value = 'system error';
           }
         } else {
-          verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') z-errno: ' . $z->get_errno() . ' ' . $z->get_error_string());
+          $this->log_z_error(__FUNCTION__, __LINE__, $agencyId, $z->get_errno(), $z->get_error_string());
           $res->userPaymentError->_value = 'system error';
         }
       } else
@@ -1103,7 +1103,7 @@ class openRuth extends webServiceServer {
         $hits = $z->z3950_search($tgt['timeout']);
         $this->watch->stop('zsearch');
         if ($err = $z->get_errno()) {
-          verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') z-errno: ' . $err . ' ' . $z->get_error_string());
+          $this->log_z_error(__FUNCTION__, __LINE__, $agencyId, $err, $z->get_error_string());
           if (!($res->userError->_value = $this->errs[$err])) 
             $res->userError->_value = 'cannot reach local system - (' . $err . ')';
         } elseif (empty($hits))
@@ -1360,7 +1360,7 @@ class openRuth extends webServiceServer {
         $hits = $z->z3950_search($tgt['timeout']);
         $this->watch->stop('zsearch');
         if ($err = $z->get_errno()) {
-          verbose::log(ERROR, __FUNCTION__ . ' (' . __LINE__ . ') z-errno: ' . $err . ' ' . $z->get_error_string());
+          $this->log_z_error(__FUNCTION__, __LINE__, $agencyId, $err, $z->get_error_string());
           if (!($res->agencyError->_value = $this->errs[$err])) 
             $res->agencyError->_value = 'cannot reach local system - (' . $err . ')';
         } elseif (empty($hits)) {
@@ -1477,6 +1477,13 @@ class openRuth extends webServiceServer {
   */
   private function xs_true($xs_bool) {
     return ($xs_bool == '1' || strtoupper($xs_bool) == 'TRUE');
+  }
+
+ /** \brief log a z3950 error
+  *  
+  */
+  private function log_z_error($function, $line, $agency, $err, $err_str = '') {
+    verbose::log(ERROR, $function . ' (' . $line . ') agency: ' . $agency . ' z-errno: ' . $err . ' ' . $err_str);
   }
 
 
