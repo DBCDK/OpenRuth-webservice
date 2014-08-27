@@ -30,45 +30,7 @@ class openRuth extends webServiceServer {
 
   public function __construct(){
     webServiceServer::__construct('openruth.ini');
-    $this->errs = array('1' => 'unknown userId', 
-                        '3' => 'amount is not the full amount', 
-                        '1001' => 'already on loan by user', 
-                        '1002' => 'already reserved by user', 
-                        '1003' => 'no copies available for reservation', 
-                        '1004' => 'ordering not allowed for this user', 
-                        '1005' => 'loan not allowed for this user category', 
-                        '1006' => 'loan not allowed, user too young', 
-                        '1007' => 'unspecified error, order not possible', 
-                        '1008' => 'system error', 
-                        '1010' => 'system error', 
-                        '1030' => 'rejected', 
-                        '1020' => 'booking, not cancelled', 
-                        '1030' => 'rejected', 
-                        '1031' => 'reserved',
-                        '1032' => 'booked',
-                        '1033' => 'copy reserved',
-                        '1034' => 'user is blocked',
-                        '1035' => 'copy not on loan by user',
-                        '1036' => 'copy not on loan',
-                        '1037' => 'copy does not exist',
-                        '1038' => 'ILL, not renewable',
-                        '1050' => 'ILL, not found',
-                        '1051' => 'system error',
-                        '1052' => 'ILL, not cancelled',
-                        '1101' => 'no agencyId supplied', 
-                        '1102' => 'unknown agencyId',
-                        '1103' => 'unknown userId',
-                        '1104' => 'wrong pin code',
-                        '1123' => 'no itemId, titlePartNo or bookingId supplied',
-                        '1110' => 'overbooking',
-                        '1111' => 'counter does not exist',
-                        '1112' => 'bookingStartDate must be before bookingEndDate',
-                        '1113' => 'bookingTotal Count must be 1 or more',
-                        '1114' => 'normal period of booking exceeded',
-                        '1115' => 'undefined error',
-                        '1116' => 'number of fetched copies exceeds number of ordered copies',
-                        '1120' => 'undefined error',
-                        '1135' => 'undefined error');
+    $this->errs = self::set_zruth_error_list();
   }
 
 
@@ -87,12 +49,12 @@ class openRuth extends webServiceServer {
    *
    */
 
-  function agencyCounters($param) { 
+  public function agencyCounters($param) { 
     if (!$this->aaa->has_right('openruth', 500))
       $res->agencyError->_value = 'authentication_error';
     else {
       $targets = $this->config->get_value('ruth', 'ztargets');
-      $agencyId = $this->strip_agency($param->agencyId->_value);
+      $agencyId = self::strip_agency($param->agencyId->_value);
       if ($tgt = $targets[$agencyId]) {
         $z = new z3950();
         $z->set_target($tgt['host']);
@@ -110,7 +72,7 @@ class openRuth extends webServiceServer {
         $this->watch->stop('zsearch');
         if ($err = $z->get_errno()) {
           $res->userError->_value = 'cannot reach local system - (' . $err . ')';
-          $this->log_z_error(__FUNCTION__, __LINE__, $agencyId, $err, $z->get_error_string());
+          self::log_z_error(__FUNCTION__, __LINE__, $agencyId, $err, $z->get_error_string());
         } elseif (empty($hits))
           $res->userError->_value = 'No counters found';
         else {
@@ -126,7 +88,7 @@ class openRuth extends webServiceServer {
               array('from' => 'LibraryNo', 'to' => 'agencyId'),
               array('from' => 'LibraryName', 'to' => 'agencyName'),
               array('from' => 'ResActivePeriode', 'to' => 'orderActivePeriod'));
-            $this->move_tags($bos, $res->agencyCounters->_value, $trans);
+            self::move_tags($bos, $res->agencyCounters->_value, $trans);
             //$sc = &$res->agencyCounterInfo->_value;
             $sc = &$res->agencyCounters->_value;
             $trans = array(
@@ -134,7 +96,7 @@ class openRuth extends webServiceServer {
               array('from' => 'ServiceCounterName', 'to' => 'agencyCounterName'),
               array('from' => 'DefaultServiceCounter', 'to' => 'agencyDefaultCounter', 'bool' => '1'));
             foreach ($bos->getElementsByTagName('ServiceCounterInfo') as $info)
-              $this->move_tags($info, $sc->agencyCounterInfo[]->_value, $trans);
+              self::move_tags($info, $sc->agencyCounterInfo[]->_value, $trans);
           } else
             $res->userError->_value = 'cannot decode answer';
         }
@@ -153,12 +115,12 @@ class openRuth extends webServiceServer {
    * @return holdings information according to the xsd
    *
    */
-  function holdings($param) { 
+  public function holdings($param) { 
     if (!$this->aaa->has_right('openruth', 500))
       $res->agencyError->_value = 'authentication_error';
     else {
       $targets = $this->config->get_value('ruth', 'ztargets');
-      $agencyId = $this->strip_agency($param->agencyId->_value);
+      $agencyId = self::strip_agency($param->agencyId->_value);
       if ($tgt = $targets[$agencyId]) {
         $z = new z3950();
         $z->set_target($tgt['host']);
@@ -187,7 +149,7 @@ class openRuth extends webServiceServer {
 //echo 'err: ' . $z->get_errno() . "\n";
           if ($err = $z->get_errno()) {
             $res->agencyError->_value = 'cannot reach local system - (' . $err . ')';
-            $this->log_z_error(__FUNCTION__, __LINE__, $agencyId, $err, $z->get_error_string());
+            self::log_z_error(__FUNCTION__, __LINE__, $agencyId, $err, $z->get_error_string());
           } elseif (empty($hits))
             $res->agencyError->_value = 'No holdings found';
           else {
@@ -202,7 +164,7 @@ class openRuth extends webServiceServer {
                 $trans = array(
                   array('from' => 'IDNR', 'to' => 'itemId'),
                   array('from' => 'PIFNOTE', 'to' => 'holdingNote'));
-                $this->move_tags($hold, $res_agency->_value, $trans);
+                self::move_tags($hold, $res_agency->_value, $trans);
                 foreach ($hold->getElementsByTagName('LIBRARY') as $lib) {
                   $this_agency = $lib->getElementsByTagName('LIBRARYNO')->item(0)->nodeValue;
 //                  if (TRUE || strpos($tgt['agency_holding'], $this_agency) !== FALSE) {
@@ -212,7 +174,7 @@ class openRuth extends webServiceServer {
                       array('from' => 'LIBRARYNAME', 'to' => 'agencyName'),
                       array('from' => 'LIBRARYLONGNAME', 'to' => 'agencyFullName'),
                       array('from' => 'ATHOME', 'to' => 'itemAvailability', 'enum' => array('0' => 'no copies exist', '1' => 'no copies for loan', '2' => 'no copies available, but item can be reserved', '3' => 'copies available for loan and reservation')));
-                    $this->move_tags($lib, $res_hold->_value->agencyHoldings->_value, $trans);
+                    self::move_tags($lib, $res_hold->_value->agencyHoldings->_value, $trans);
                     foreach ($lib->getElementsByTagName('PERIODICA') as $peri) {
                       $trans = array(
                         array('from' => 'TITLEPARTNO', 'to' => 'itemSerialPartId'),
@@ -221,7 +183,7 @@ class openRuth extends webServiceServer {
                         array('from' => 'RESERVATIONS', 'to' => 'ordersCount'),
                         array('from' => 'BOOKINGS', 'to' => 'bookingsCount'),
                         array('from' => 'EXPECTEDDISPATCHDATE', 'to' => 'itemExpectedAvailabilityDate', 'date' => 'swap'));
-                      $this->move_tags($peri, $res_item->_value, $trans);
+                      self::move_tags($peri, $res_item->_value, $trans);
                       if (isset($res_item)) {
                         foreach ($peri->childNodes as $location) {
                           if ($location->tagName == 'LOCATION')
@@ -233,28 +195,28 @@ class openRuth extends webServiceServer {
                           $trans = array(
                             array('from' => 'MMCOLLECTION', 'from_attr' => 'BOOKINGALLOWED', 'to' => 'bookingAllowed', 'bool' => 'y'),
                             array('from' => 'MMCOLLECTION', 'from_attr' => 'RESERVATIONALLOWED', 'to' => 'orderAllowed', 'bool' => 'y'));
-                          $this->move_tags($location, $res_loc, $trans);
+                          self::move_tags($location, $res_loc, $trans);
                           $trans = array(
                             array('from' => 'MMCOLLECTION', 'from_attr' => 'CODE', 'to' => 'agencyCollectionCode'),
                             array('from' => 'MMCOLLECTION', 'to' => 'agencyCollectionName'));
-                          $this->move_tags($location, $res_loc->agencyCollectionId->_value, $trans);
+                          self::move_tags($location, $res_loc->agencyCollectionId->_value, $trans);
                           $trans = array(
                             array('from' => 'BRANCH', 'from_attr' => 'CODE', 'to' => 'agencyBranchCode'),
                             array('from' => 'BRANCH', 'to' => 'agencyBranchName'));
-                          $this->move_tags($location, $res_loc->agencyBranchId->_value, $trans);
+                          self::move_tags($location, $res_loc->agencyBranchId->_value, $trans);
                           $trans = array(
                             array('from' => 'DEPARTMENT', 'from_attr' => 'CODE', 'to' => 'agencyDepartmentCode', 'non_empty' => TRUE),
                             array('from' => 'DEPARTMENT', 'to' => 'agencyDepartmentName', 'non_empty' => TRUE));
-                          $this->move_tags($location, $res_loc->agencyDepartmentId->_value, $trans);
+                          self::move_tags($location, $res_loc->agencyDepartmentId->_value, $trans);
                           $trans = array(
                             array('from' => 'PLACEMENT', 'from_attr' => 'CODE', 'to' => 'agencyPlacementCode'),
                             array('from' => 'PLACEMENT', 'to' => 'agencyPlacementName'));
-                          $this->move_tags($location, $res_loc->agencyPlacementId->_value, $trans);
+                          self::move_tags($location, $res_loc->agencyPlacementId->_value, $trans);
                           $trans = array(
                             array('from' => 'HOME', 'to' => 'copiesAvailableCount'),
                             array('from' => 'TOTAL', 'to' => 'copiesCount'),
                             array('from' => 'DELIVERYDATE', 'to' => 'itemExpectedDeliveryDate', 'date' => 'swap'));
-                          $this->move_tags($location, $res_loc, $trans);
+                          self::move_tags($location, $res_loc, $trans);
                           unset($res_loc);
                         }
                         $res_hold->_value->itemHoldings[] = $res_item;
@@ -300,12 +262,12 @@ class openRuth extends webServiceServer {
    * @return Information about the booking
    *
    */
-  function bookingInfo($param) { 
+  public function bookingInfo($param) { 
     if (!$this->aaa->has_right('openruth', 500))
       $res->bookingError->_value = 'authentication_error';
     else {
       $targets = $this->config->get_value('ruth', 'ztargets');
-      $agencyId = $this->strip_agency($param->agencyId->_value);
+      $agencyId = self::strip_agency($param->agencyId->_value);
       if ($tgt = $targets[$agencyId]) {
         $z = new z3950();
         $z->set_target($tgt['host']);
@@ -331,7 +293,7 @@ class openRuth extends webServiceServer {
 //echo 'err: ' . $z->get_errno() . "\n";
         if ($err = $z->get_errno()) {
           $res->bookingError->_value = 'cannot reach local system - (' . $err . ')';
-          $this->log_z_error(__FUNCTION__, __LINE__, $agencyId, $err, $z->get_error_string());
+          self::log_z_error(__FUNCTION__, __LINE__, $agencyId, $err, $z->get_error_string());
         } elseif (empty($hits))
           $res->bookingError->_value = 'No booking found';
         else {
@@ -346,7 +308,7 @@ class openRuth extends webServiceServer {
               array('from' => 'Total', 'to' => 'bookingInfoTotalCount'),
               array('from' => 'BookingNote', 'to' => 'bookingNote'));
             foreach ($dom->getElementsByTagName('BookingProfile') as $bp)
-              $this->move_tags($bp, $res->bookingInfo->_value, $trans);
+              self::move_tags($bp, $res->bookingInfo->_value, $trans);
             foreach ($dom->getElementsByTagName('BookingChange') as $bc) {
               $rbc->bookingChangeCount->_value = $bc->nodeValue;
               $rbc->bookingChangeDate->_value = $bc->getAttribute('D');
@@ -373,19 +335,19 @@ class openRuth extends webServiceServer {
    * @return 
    *
    */
-  function bookItem($param) { 
+  public function bookItem($param) { 
     if (!$this->aaa->has_right('openruth', 500))
       $res->bookingError->_value = 'authentication_error';
     else {
-      $agencyId = $this->strip_agency($param->agencyId->_value);
+      $agencyId = self::strip_agency($param->agencyId->_value);
       $targets = $this->config->get_value('ruth', 'ztargets');
       if ($tgt = $targets[$agencyId]) {
         $book = &$booking->Booking->_value;
         $book->LibraryNo->_value = $agencyId;
         $book->BorrowerTicketNo->_value = $param->userId->_value;
         $book->BookingNote->_value = $param->bookingNote->_value;
-        $book->StartDate->_value = $this->to_zruth_date($param->bookingStartDate->_value);
-        $book->EndDate->_value = $this->to_zruth_date($param->bookingEndDate->_value);
+        $book->StartDate->_value = self::to_zruth_date($param->bookingStartDate->_value);
+        $book->EndDate->_value = self::to_zruth_date($param->bookingEndDate->_value);
         $book->NumberOrdered->_value = $param->bookingTotalCount->_value;
         $book->ServiceCounter->_value = $param->agencyCounter->_value;
         $book->MRID->_value->ID->_value = $param->itemId->_value;
@@ -416,11 +378,11 @@ class openRuth extends webServiceServer {
                 $res->bookingError->_value = 'unspecified error (' . $err . '), order not possible';
             } else {
               $res->bookingOk->_value->bookingId->_value = $dom->getElementsByTagName('BookingID')->item(0)->nodeValue;
-              if ($sd = $this->from_zruth_date($dom->getElementsByTagName('StartDate')->item(0)->nodeValue))
+              if ($sd = self::from_zruth_date($dom->getElementsByTagName('StartDate')->item(0)->nodeValue))
                 $res->bookingOk->_value->bookingStartDate->_value = $sd;
               else
                 $res->bookingOk->_value->bookingStartDate->_value = $param->bookingStartDate->_value;
-              if ($ed = $this->from_zruth_date($dom->getElementsByTagName('EndDate')->item(0)->nodeValue))
+              if ($ed = self::from_zruth_date($dom->getElementsByTagName('EndDate')->item(0)->nodeValue))
                 $res->bookingOk->_value->bookingEndDate->_value = $ed;
               else
                 $res->bookingOk->_value->bookingEndDate->_value = $param->bookingEndDate->_value;
@@ -430,7 +392,7 @@ class openRuth extends webServiceServer {
             $res->bookingError->_value = 'system error';
           }
         } else {
-          $this->log_z_error(__FUNCTION__, __LINE__, $agencyId, $z->get_errno(), $z->get_error_string());
+          self::log_z_error(__FUNCTION__, __LINE__, $agencyId, $z->get_errno(), $z->get_error_string());
           $res->bookingError->_value = 'system error';
         }
       } else
@@ -448,19 +410,19 @@ class openRuth extends webServiceServer {
    * @return 
    *
    */
-  function updateBooking($param) { 
+  public function updateBooking($param) { 
     if (!$this->aaa->has_right('openruth', 500))
       $res->bookingError->_value = 'authentication_error';
     else {
-      $agencyId = $this->strip_agency($param->agencyId->_value);
+      $agencyId = self::strip_agency($param->agencyId->_value);
       $targets = $this->config->get_value('ruth', 'ztargets');
       if ($tgt = $targets[$agencyId]) {
         $book = &$booking->BookingUpdate->_value;
         $book->LibraryNo->_value = $agencyId;
         $book->DisposalID->_value = $param->bookingId->_value;
         $book->BookingNote->_value = $param->bookingNote->_value;
-        $book->StartDate->_value = $this->to_zruth_date($param->bookingStartDate->_value);
-        $book->EndDate->_value = $this->to_zruth_date($param->bookingEndDate->_value);
+        $book->StartDate->_value = self::to_zruth_date($param->bookingStartDate->_value);
+        $book->EndDate->_value = self::to_zruth_date($param->bookingEndDate->_value);
         $book->NumberOrdered->_value = $param->bookingTotalCount->_value;
         $book->ServiceCounter->_value = $param->agencyCounter->_value;
         $xml = '<?xml version="1.0" encoding="ISO-8859-1" ?'.'>' . utf8_decode($this->objconvert->obj2xml($booking));
@@ -489,11 +451,11 @@ class openRuth extends webServiceServer {
                 $res->bookingError->_value = 'unspecified error (' . $err . '), order not possible';
             } else {
               $res->bookingOk->_value->bookingId->_value = $param->bookingId->_value;
-              if ($sd = $this->from_zruth_date($dom->getElementsByTagName('StartDate')->item(0)->nodeValue))
+              if ($sd = self::from_zruth_date($dom->getElementsByTagName('StartDate')->item(0)->nodeValue))
                 $res->bookingOk->_value->bookingStartDate->_value = $sd;
               elseif ($sd = $param->bookingStartDate->_value)
                 $res->bookingOk->_value->bookingStartDate->_value = $sd;
-              if ($ed = $this->from_zruth_date($dom->getElementsByTagName('EndDate')->item(0)->nodeValue))
+              if ($ed = self::from_zruth_date($dom->getElementsByTagName('EndDate')->item(0)->nodeValue))
                 $res->bookingOk->_value->bookingEndDate->_value = $ed;
               elseif ($ed = $param->bookingEndDate->_value)
                 $res->bookingOk->_value->bookingEndDate->_value = $ed;
@@ -503,7 +465,7 @@ class openRuth extends webServiceServer {
             $res->bookingError->_value = 'system error';
           }
         } else {
-          $this->log_z_error(__FUNCTION__, __LINE__, $agencyId, $z->get_errno(), $z->get_error_string());
+          self::log_z_error(__FUNCTION__, __LINE__, $agencyId, $z->get_errno(), $z->get_error_string());
           $res->bookingError->_value = 'system error';
         }
       } else
@@ -521,11 +483,11 @@ class openRuth extends webServiceServer {
    * @return 
    *
    */
-  function cancelBooking($param) { 
+  public function cancelBooking($param) { 
     if (!$this->aaa->has_right('openruth', 500))
       $res->bookingError->_value = 'authentication_error';
     else {
-      $agencyId = $this->strip_agency($param->agencyId->_value);
+      $agencyId = self::strip_agency($param->agencyId->_value);
       $targets = $this->config->get_value('ruth', 'ztargets');
       if ($tgt = $targets[$agencyId]) {
         $book = &$booking->BookingDelete->_value;
@@ -559,7 +521,7 @@ class openRuth extends webServiceServer {
             $res->bookingError->_value = 'system error';
           }
         } else {
-          $this->log_z_error(__FUNCTION__, __LINE__, $agencyId, $z->get_errno(), $z->get_error_string());
+          self::log_z_error(__FUNCTION__, __LINE__, $agencyId, $z->get_errno(), $z->get_error_string());
           $res->bookingError->_value = 'system error';
         }
       } else
@@ -586,11 +548,11 @@ class openRuth extends webServiceServer {
    * @return 
    *
    */
-  function cancelOrder($param) { 
+  public function cancelOrder($param) { 
     if (!$this->aaa->has_right('openruth', 500))
       $res->cancelOrderError->_value = 'authentication_error';
     else {
-      $agencyId = $this->strip_agency($param->agencyId->_value);
+      $agencyId = self::strip_agency($param->agencyId->_value);
       $targets = $this->config->get_value('ruth', 'ztargets');
       if ($tgt = $targets[$agencyId]) {
         $ord = &$order->ReservationDelete->_value;
@@ -624,7 +586,7 @@ class openRuth extends webServiceServer {
             $res->cancelOrderError->_value = 'system error';
           }
         } else {
-          $this->log_z_error(__FUNCTION__, __LINE__, $agencyId, $z->get_errno(), $z->get_error_string());
+          self::log_z_error(__FUNCTION__, __LINE__, $agencyId, $z->get_errno(), $z->get_error_string());
           $res->cancelOrderError->_value = 'system error';
         }
       } else
@@ -643,21 +605,21 @@ class openRuth extends webServiceServer {
    * @return 
    *
    */
-  function orderItem($param) { 
+  public function orderItem($param) { 
     if (!$this->aaa->has_right('openruth', 500))
       $res->orderItemError->_value = 'authentication_error';
     else {
       $targets = $this->config->get_value('ruth', 'ztargets');
-      $agencyId = $this->strip_agency($param->agencyId->_value);
+      $agencyId = self::strip_agency($param->agencyId->_value);
       if ($tgt = $targets[$agencyId]) {
     // build order
         $ord = &$order->Reservation->_value;
         $ord->LibraryNo->_value = $agencyId;
         $ord->BorrowerTicketNo->_value = $param->userId->_value;
         $ord->DisposalNote->_value = $param->orderNote->_value;
-        $ord->LastUseDate->_value = $this->to_zruth_date($param->orderLastInterestDate->_value);
+        $ord->LastUseDate->_value = self::to_zruth_date($param->orderLastInterestDate->_value);
         $ord->ServiceCounter->_value = $param->agencyCounter->_value;
-        $ord->Override->_value = ($this->xs_true($param->agencyCounter->_value) ? 'Y' : 'N');
+        $ord->Override->_value = (self::xs_true($param->agencyCounter->_value) ? 'Y' : 'N');
         $ord->Priority->_value = $param->orderPriority->_value;
         // ?????? $ord->DisposalType->_value = $param->xxxx->_value;
         $itemIds = &$param->orderItemId;
@@ -711,7 +673,7 @@ class openRuth extends webServiceServer {
             }
           }
         } else {
-          $this->log_z_error(__FUNCTION__, __LINE__, $agencyId, $z->get_errno(), $z->get_error_string());
+          self::log_z_error(__FUNCTION__, __LINE__, $agencyId, $z->get_errno(), $z->get_error_string());
           $res->orderItemError->_value = 'system error';
         }
 //echo "\n";
@@ -732,18 +694,18 @@ class openRuth extends webServiceServer {
    * @return
    *
    */
-  function updateOrder($param) { 
+  public function updateOrder($param) { 
     if (!$this->aaa->has_right('openruth', 500))
       $res->updateOrderError->_value = 'authentication_error';
     else {
-      $agencyId = $this->strip_agency($param->agencyId->_value);
+      $agencyId = self::strip_agency($param->agencyId->_value);
       $targets = $this->config->get_value('ruth', 'ztargets');
       if ($tgt = $targets[$agencyId]) {
         $ord = &$order->ReservationUpdate->_value;
         $ord->LibraryNo->_value = $agencyId;
         $ord->DisposalID->_value = $param->orderId->_value;
         $ord->DisposalNote->_value = $param->orderNote->_value;
-        $ord->LastUseDate->_value = $this->to_zruth_date($param->orderLastInterestDate->_value);
+        $ord->LastUseDate->_value = self::to_zruth_date($param->orderLastInterestDate->_value);
         $ord->ServiceCounter->_value = $param->agencyCounter->_value;
         $xml = '<?xml version="1.0" encoding="ISO-8859-1" ?'.'>' . utf8_decode($this->objconvert->obj2xml($order));
         $z = new z3950();
@@ -773,7 +735,7 @@ class openRuth extends webServiceServer {
             $res->updateOrderError->_value = 'system error';
           }
         } else {
-          $this->log_z_error(__FUNCTION__, __LINE__, $agencyId, $z->get_errno(), $z->get_error_string());
+          self::log_z_error(__FUNCTION__, __LINE__, $agencyId, $z->get_errno(), $z->get_error_string());
           $res->updateOrderError->_value = 'system error';
         }
       } else
@@ -803,11 +765,11 @@ class openRuth extends webServiceServer {
    * @return
    *
    */
-  function renewLoan($param) { 
+  public function renewLoan($param) { 
     if (!$this->aaa->has_right('openruth', 500))
       $res->renewLoanError->_value = 'authentication_error';
     else {
-      $agencyId = $this->strip_agency($param->agencyId->_value);
+      $agencyId = self::strip_agency($param->agencyId->_value);
       $targets = $this->config->get_value('ruth', 'ztargets');
       if ($tgt = $targets[$agencyId]) {
         $renewal = &$renew->Renewal->_value;
@@ -854,7 +816,7 @@ class openRuth extends webServiceServer {
             $res->renewLoanError->_value = 'system error';
           }
         } else {
-          $this->log_z_error(__FUNCTION__, __LINE__, $agencyId, $z->get_errno(), $z->get_error_string());
+          self::log_z_error(__FUNCTION__, __LINE__, $agencyId, $z->get_errno(), $z->get_error_string());
           $res->renewLoanError->_value = 'system error';
         }
       } else
@@ -874,11 +836,11 @@ class openRuth extends webServiceServer {
    * @return
    *
    */
-  function updateUserInfo($param) { 
+  public function updateUserInfo($param) { 
     if (!$this->aaa->has_right('openruth', 500))
       $res->userError->_value = 'authentication_error';
     else {
-      $agencyId = $this->strip_agency($param->agencyId->_value);
+      $agencyId = self::strip_agency($param->agencyId->_value);
       $targets = $this->config->get_value('ruth', 'ztargets');
       if ($tgt = $targets[$agencyId]) {
         $bor = &$borrower->BorrowerPinMail->_value;
@@ -897,8 +859,8 @@ class openRuth extends webServiceServer {
             $bor->UseCopyRetainedMsg->_value = 'other';
         if ($param->userFirstName->_value) $bor->FirstName->_value = $param->userFirstName->_value;
         if ($param->userLastName->_value) $bor->FamilyName->_value = $param->userLastName->_value;
-        if (isset($param->userAbsenceStartDate)) $bor->AbsenceStart->_value = $this->to_zruth_date($param->userAbsenceStartDate->_value);
-        if (isset($param->userAbsenceEndDate)) $bor->AbsenceStop->_value = $this->to_zruth_date($param->userAbsenceEndDate->_value);
+        if (isset($param->userAbsenceStartDate)) $bor->AbsenceStart->_value = self::to_zruth_date($param->userAbsenceStartDate->_value);
+        if (isset($param->userAbsenceEndDate)) $bor->AbsenceStop->_value = self::to_zruth_date($param->userAbsenceEndDate->_value);
         if ($param->agencyCounter->_value) $bor->StandardCounter->_value = $param->agencyCounter->_value;
         $xml = '<?xml version="1.0" encoding="ISO-8859-1" ?'.'>' . utf8_decode($this->objconvert->obj2xml($borrower));
         $z = new z3950();
@@ -932,7 +894,7 @@ class openRuth extends webServiceServer {
             $res->userError->_value = 'cannot decode answer';
           }
         } else {
-          $this->log_z_error(__FUNCTION__, __LINE__, $agencyId, $z->get_errno(), $z->get_error_string());
+          self::log_z_error(__FUNCTION__, __LINE__, $agencyId, $z->get_errno(), $z->get_error_string());
           $res->userError->_value = 'cannot reach local system';
         }
       } else
@@ -950,12 +912,12 @@ class openRuth extends webServiceServer {
    * @return info about user
    *
    */
-  function userCheck($param) { 
+  public function userCheck($param) { 
     if (!$this->aaa->has_right('openruth', 500))
       $res->agencyError->_value = 'authentication_error';
     else {
       $targets = $this->config->get_value('ruth', 'ztargets');
-      $agencyId = $this->strip_agency($param->agencyId->_value);
+      $agencyId = self::strip_agency($param->agencyId->_value);
       if ($tgt = $targets[$agencyId]) {
         $z = new z3950();
         $z->set_target($tgt['host']);
@@ -974,7 +936,7 @@ class openRuth extends webServiceServer {
 //var_dump($hits);
 //var_dump($z->get_errno());
         if ($err = $z->get_errno()) {
-          $this->log_z_error(__FUNCTION__, __LINE__, $agencyId, $err, $z->get_error_string());
+          self::log_z_error(__FUNCTION__, __LINE__, $agencyId, $err, $z->get_error_string());
           $res->userError->_value = 'cannot reach local system - (' . $err . ')';
         } elseif (empty($hits))
           $res->userError->_value = 'unknown userId';
@@ -1004,7 +966,7 @@ class openRuth extends webServiceServer {
               array('from' => 'BirthYear', 'to' => 'userBirthYear'),
               array('from' => 'Sex', 'to' => 'userSex', 'enum' => array('b' => 'male', 'g' => 'female', 'u' => unknown)),
               array('from' => 'userAge', 'to' => 'Age'));
-            $this->move_tags($chk, $res->userCheck->_value, $trans);
+            self::move_tags($chk, $res->userCheck->_value, $trans);
           } else
             $res->userError->_value = 'cannot decode answer';
         }
@@ -1023,11 +985,11 @@ class openRuth extends webServiceServer {
    * @return 
    *
    */
-  function userPayment($param) { 
+  public function userPayment($param) { 
     if (!$this->aaa->has_right('openruth', 500))
       $res->userPaymentError->_value = 'authentication_error';
     else {
-      $agencyId = $this->strip_agency($param->agencyId->_value);
+      $agencyId = self::strip_agency($param->agencyId->_value);
       $targets = $this->config->get_value('ruth', 'ztargets');
       if ($tgt = $targets[$agencyId]) {
         $pay = &$payment->BorrowerPay->_value;
@@ -1063,7 +1025,7 @@ class openRuth extends webServiceServer {
             $res->userPaymentError->_value = 'system error';
           }
         } else {
-          $this->log_z_error(__FUNCTION__, __LINE__, $agencyId, $z->get_errno(), $z->get_error_string());
+          self::log_z_error(__FUNCTION__, __LINE__, $agencyId, $z->get_errno(), $z->get_error_string());
           $res->userPaymentError->_value = 'system error';
         }
       } else
@@ -1081,12 +1043,12 @@ class openRuth extends webServiceServer {
    * @return Information about the user
    *
    */
-  function userStatus($param) { 
+  public function userStatus($param) { 
     if (!$this->aaa->has_right('openruth', 500))
       $res->userError->_value = 'authentication_error';
     else {
       $targets = $this->config->get_value('ruth', 'ztargets');
-      $agencyId = $this->strip_agency($param->agencyId->_value);
+      $agencyId = self::strip_agency($param->agencyId->_value);
       if ($tgt = $targets[$agencyId]) {
         $z = new z3950();
         $z->set_target($tgt['host']);
@@ -1103,7 +1065,7 @@ class openRuth extends webServiceServer {
         $hits = $z->z3950_search($tgt['timeout']);
         $this->watch->stop('zsearch');
         if ($err = $z->get_errno()) {
-          $this->log_z_error(__FUNCTION__, __LINE__, $agencyId, $err, $z->get_error_string());
+          self::log_z_error(__FUNCTION__, __LINE__, $agencyId, $err, $z->get_error_string());
           if (!($res->userError->_value = $this->errs[$err])) 
             $res->userError->_value = 'cannot reach local system - (' . $err . ')';
         } elseif (empty($hits))
@@ -1137,21 +1099,21 @@ class openRuth extends webServiceServer {
               array('from' => 'BookingAllowed', 'to' => 'userBookingAllowed', 'bool' => 'y'),
               array('from' => 'Penalties', 'to' => 'userFeesTotal', 'decimal' => TRUE),
               array('from' => 'MobilePhone', 'to' => 'userMobilePhone'));
-            $this->move_tags($loaner, $ui, $trans);
+            self::move_tags($loaner, $ui, $trans);
           // journals maps into userInfo
             $trans = array(
               array('from' => 'JournalDate', 'to' => 'userNoteDate', 'date' => 'swap'),
               array('from' => 'JournalTxt', 'to' => 'userNoteText'));
             foreach ($dom->getElementsByTagName('Journals') as $journals)
               foreach ($journals->getElementsByTagName('Journal') as $journal)
-                $this->move_tags($journal, $ui->userNote[]->_value, $trans);
+                self::move_tags($journal, $ui->userNote[]->_value, $trans);
           // ... and the rest ...
             $trans = array(
               array('from' => 'UsePreReturnMsg', 'to' => 'userRecallNotificationPreference', 'enum' => array('e' => 'email', 's' => 'sms', 'b' => 'both')),
               array('from' => 'UseCopyRetainedMsg', 'to' => 'userOrderReadyNotificationPreference', 'enum' => array('e' => 'email', 's' => 'sms', 'b' => 'both')),
               array('from' => 'AbsenceStart', 'to' => 'userAbsenceStartDate', 'date' => 'swap'),
               array('from' => 'AbsenceStop', 'to' => 'userAbsenceEndDate', 'date' => 'swap'));
-            $this->move_tags($loaner, $ui, $trans);
+            self::move_tags($loaner, $ui, $trans);
 
         // fines
             $fi = &$res->userStatus->_value->fees->_value;
@@ -1165,7 +1127,7 @@ class openRuth extends webServiceServer {
               array('from' => 'InvoiceNo', 'to' => 'feeInvoiceNumber'));
             foreach ($dom->getElementsByTagName('Fines') as $fines)
               foreach ($fines->getElementsByTagName('Fine') as $fine)
-                $this->move_tags($fine, $fi->fee[]->_value, $trans);
+                self::move_tags($fine, $fi->fee[]->_value, $trans);
             
 
         // loans
@@ -1173,7 +1135,7 @@ class openRuth extends webServiceServer {
             $loans = &$dom->getElementsByTagName('Loans')->item(0);
             $trans = array(
               array('from' => 'RenewChecked', 'to' => 'renewAllLoansAllowed', 'bool' => 'y'));
-            $this->move_tags($loans, $los, $trans);
+            self::move_tags($loans, $los, $trans);
             $status = &$dom->getElementsByTagName('Status');
             $trans = array(
               array('from' => 'LoanCat', 'to' => 'loanCategory'),
@@ -1183,9 +1145,9 @@ class openRuth extends webServiceServer {
               array('from' => 'Number', 'to' => 'loanRecallTypeCount '));
             foreach ($dom->getElementsByTagName('Status') as $status) {
               foreach ($status->getElementsByTagName('CategoryLoans') as $c_los)
-                $this->move_tags($c_los, $los->loanCategories[]->_value, $trans);
+                self::move_tags($c_los, $los->loanCategories[]->_value, $trans);
               foreach ($status->getElementsByTagName('RecallStatus') as $r_stat)
-                $this->move_tags($r_stat, $los->loanRecallTypes[]->_value, $trans_2);
+                self::move_tags($r_stat, $los->loanRecallTypes[]->_value, $trans_2);
             }
             $trans = array(
               array('from' => 'Title', 'to' => 'itemDisplayTitle'),
@@ -1202,7 +1164,7 @@ class openRuth extends webServiceServer {
               array('from' => 'RecallDate', 'to' => 'loanRecallDate', 'date' => 'swap'),
               array('from' => 'CanRenew', 'to' => 'loanRenewable', 'enum' => array('0' => 'renewable', '1' => 'not renewable', '2' => 'ILL, renewable', '3' => 'ILL, not renewable')));
             foreach ($loans->getElementsByTagName('Loan') as $loan)
-              $this->move_tags($loan, $los->loan[]->_value, $trans);
+              self::move_tags($loan, $los->loan[]->_value, $trans);
 
         // orders
             $ord = &$res->userStatus->_value->orders->_value;
@@ -1223,7 +1185,7 @@ class openRuth extends webServiceServer {
               array('from' => 'CreationDate', 'to' => 'orderDate', 'date' => 'swap'),
               array('from' => 'Arrived', 'to' => 'orderArrived', 'bool' => 'true'));
             foreach ($rsr->getElementsByTagName('ReservationReady') as $r)
-              $this->move_tags($r, $ord->orderReady[]->_value, $trans);
+              self::move_tags($r, $ord->orderReady[]->_value, $trans);
             $rsnr = &$reservations->getElementsByTagName('ReservationsNotReady')->item(0);
             $trans = array(
               array('from' => 'Title', 'to' => 'itemDisplayTitle'),
@@ -1246,7 +1208,7 @@ class openRuth extends webServiceServer {
               array('from' => 'DisposalType', 'to' => 'orderType', 'enum' => array('0' => 'booking', '1' => 'reservation', '2' => 'ILL')),
               array('from' => 'ExpectedDelivery', 'to' => 'orderExpectedAvailabilityDate', 'date' => 'swap'));
             foreach ($rsnr->getElementsByTagName('ReservationNotReady') as $r)
-              $this->move_tags($r, $ord->orderNotReady[]->_value, $trans);
+              self::move_tags($r, $ord->orderNotReady[]->_value, $trans);
 
         // bookings
             $book = &$res->userStatus->_value->bookings->_value;
@@ -1275,7 +1237,7 @@ class openRuth extends webServiceServer {
               array('from' => 'BookingNote', 'to' => 'bookingNote'),
               array('from' => 'ServiceCounter', 'to' => 'agencyCounter'));
             foreach ($bookings->getElementsByTagName('Booking') as $b)
-              $this->move_tags($b, $book->booking[]->_value, $trans);
+              self::move_tags($b, $book->booking[]->_value, $trans);
 
         // illOrders
             $illloans = &$dom->getElementsByTagName('ILLoans')->item(0);
@@ -1316,7 +1278,7 @@ class openRuth extends webServiceServer {
               array('from' => 'CreationDate', 'to' => 'orderDate', 'date' => 'swap'),
               array('from' => 'LastUseDate', 'to' => 'orderLastInterestDate', 'date' => 'swap'));
             foreach ($illloans->getElementsByTagName('ILLoan') as $l)
-              $this->move_tags($l, $ill->illOrder[]->_value, $trans);
+              self::move_tags($l, $ill->illOrder[]->_value, $trans);
           } else
             $res->userError->_value = 'cannot decode answer';
 
@@ -1338,12 +1300,12 @@ class openRuth extends webServiceServer {
    * @return Information about the agency
    *
    */
-  function agencyList($param) { 
+  public function agencyList($param) { 
     if (!$this->aaa->has_right('openruth', 500)) {
       $res->agencyError->_value = 'authentication_error';
     } else {
       $targets = $this->config->get_value('ruth', 'ztargets');
-      $agencyId = $this->strip_agency($param->agencyId->_value);
+      $agencyId = self::strip_agency($param->agencyId->_value);
       if ($tgt = $targets[$agencyId]) {
         $z = new z3950();
         $z->set_target($tgt['host']);
@@ -1360,7 +1322,7 @@ class openRuth extends webServiceServer {
         $hits = $z->z3950_search($tgt['timeout']);
         $this->watch->stop('zsearch');
         if ($err = $z->get_errno()) {
-          $this->log_z_error(__FUNCTION__, __LINE__, $agencyId, $err, $z->get_error_string());
+          self::log_z_error(__FUNCTION__, __LINE__, $agencyId, $err, $z->get_error_string());
           if (!($res->agencyError->_value = $this->errs[$err])) 
             $res->agencyError->_value = 'cannot reach local system - (' . $err . ')';
         } elseif (empty($hits)) {
@@ -1423,9 +1385,9 @@ class openRuth extends webServiceServer {
           $to->{$tag['to']}[]->_value = $node_val;
         elseif ($node_val <> NULL)
           if ($tag['date'] == 'swap')
-            $to->{$tag['to']}[]->_value = $this->from_zruth_date($node_val);
+            $to->{$tag['to']}[]->_value = self::from_zruth_date($node_val);
           elseif ($tag['decimal'])
-            $to->{$tag['to']}[]->_value = $this->from_zruth_decimal($node_val);
+            $to->{$tag['to']}[]->_value = self::from_zruth_decimal($node_val);
           elseif (empty($tag['non_empty']))
             $to->{$tag['to']}[]->_value = $node_val;
       }
@@ -1486,6 +1448,50 @@ class openRuth extends webServiceServer {
     verbose::log(ERROR, $function . ' (' . $line . ') agency: ' . $agency . ' z-errno: ' . $err . ' ' . $err_str);
   }
 
+ /** \brief defines list of possible errors
+  *  
+  */
+  private function set_zruth_error_list() {
+   return array('1' => 'unknown userId',
+                '3' => 'amount is not the full amount',
+                '1001' => 'already on loan by user',
+                '1002' => 'already reserved by user',
+                '1003' => 'no copies available for reservation',
+                '1004' => 'ordering not allowed for this user',
+                '1005' => 'loan not allowed for this user category',
+                '1006' => 'loan not allowed, user too young',
+                '1007' => 'unspecified error, order not possible',
+                '1008' => 'system error',
+                '1010' => 'system error',
+                '1030' => 'rejected',
+                '1020' => 'booking, not cancelled',
+                '1030' => 'rejected',
+                '1031' => 'reserved',
+                '1032' => 'booked',
+                '1033' => 'copy reserved',
+                '1034' => 'user is blocked',
+                '1035' => 'copy not on loan by user',
+                '1036' => 'copy not on loan',
+                '1037' => 'copy does not exist',
+                '1038' => 'ILL, not renewable',
+                '1050' => 'ILL, not found',
+                '1051' => 'system error',
+                '1052' => 'ILL, not cancelled',
+                '1101' => 'no agencyId supplied',
+                '1102' => 'unknown agencyId',
+                '1103' => 'unknown userId',
+                '1104' => 'wrong pin code',
+                '1123' => 'no itemId, titlePartNo or bookingId supplied',
+                '1110' => 'overbooking',
+                '1111' => 'counter does not exist',
+                '1112' => 'bookingStartDate must be before bookingEndDate',
+                '1113' => 'bookingTotal Count must be 1 or more',
+                '1114' => 'normal period of booking exceeded',
+                '1115' => 'undefined error',
+                '1116' => 'number of fetched copies exceeds number of ordered copies',
+                '1120' => 'undefined error',
+                '1135' => 'undefined error');
+  }
 
 }
 
