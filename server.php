@@ -861,6 +861,8 @@ class openRuth extends webServiceServer {
         if ($param->userLastName->_value) $bor->FamilyName->_value = $param->userLastName->_value;
         if (isset($param->userAbsenceStartDate)) $bor->AbsenceStart->_value = self::to_zruth_date($param->userAbsenceStartDate->_value);
         if (isset($param->userAbsenceEndDate)) $bor->AbsenceStop->_value = self::to_zruth_date($param->userAbsenceEndDate->_value);
+        if (isset($param->userBonPrintAsEmail)) $bor->BonPrintAsEmail->_value = self::xs_true($param->userBonPrintAsEmail->_value) ? 'y' : 'n';
+        if ($param->userLetterLanguage->_value) $bor->LetterLanguageCode->_value = $param->userLetterLanguage->_value;
         if ($param->agencyCounter->_value) $bor->StandardCounter->_value = $param->agencyCounter->_value;
         $xml = '<?xml version="1.0" encoding="ISO-8859-1" ?'.'>' . utf8_decode($this->objconvert->obj2xml($borrower));
         $z = new z3950();
@@ -1112,7 +1114,9 @@ class openRuth extends webServiceServer {
               array('from' => 'UsePreReturnMsg', 'to' => 'userRecallNotificationPreference', 'enum' => array('e' => 'email', 's' => 'sms', 'b' => 'both')),
               array('from' => 'UseCopyRetainedMsg', 'to' => 'userOrderReadyNotificationPreference', 'enum' => array('e' => 'email', 's' => 'sms', 'b' => 'both')),
               array('from' => 'AbsenceStart', 'to' => 'userAbsenceStartDate', 'date' => 'swap'),
-              array('from' => 'AbsenceStop', 'to' => 'userAbsenceEndDate', 'date' => 'swap'));
+              array('from' => 'AbsenceStop', 'to' => 'userAbsenceEndDate', 'date' => 'swap'),
+              array('from' => 'BonPrintAsEmail', 'to' => 'userBonPrintAsEmail', 'bool' => 'y'),
+              array('from' => 'LetterLanguageCode', 'to' => 'userLetterLanguage'));
             self::move_tags($loaner, $ui, $trans);
 
         // fines

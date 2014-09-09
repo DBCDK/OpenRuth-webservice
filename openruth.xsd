@@ -277,6 +277,8 @@
 				<xs:element ref="or:userLastName" minOccurs="0"/>
 				<xs:element ref="or:userAbsenceStartDate" minOccurs="0"/>
 				<xs:element ref="or:userAbsenceEndDate" minOccurs="0"/>
+				<xs:element ref="or:userBonPrintAsEmail" minOccurs="0"/>
+				<xs:element ref="or:userLetterLanguage" minOccurs="0"/>
 				<xs:element ref="or:agencyCounter" minOccurs="0"/>
 				<xs:element ref="or:callback" minOccurs="0"/>
 				<xs:element ref="or:outputType" minOccurs="0"/>
@@ -1295,6 +1297,11 @@
 			<xs:documentation xml:lang="en">Boolean indicating whether user is blocked</xs:documentation>
 		</xs:annotation>
 	</xs:element>
+	<xs:element name="userBonPrintAsEmail" type="xs:boolean">
+		<xs:annotation>
+			<xs:documentation xml:lang="en">Boolean indicating if bon print should be send as mail</xs:documentation>
+		</xs:annotation>
+	</xs:element>
 	<xs:element name="userBookingAllowed" type="xs:boolean">
 		<xs:annotation>
 			<xs:documentation xml:lang="en">Boolean indicating whether user is allowed to book materials in local system</xs:documentation>
@@ -1413,6 +1420,8 @@
 				<xs:element ref="or:userOrderReadyNotificationPreference" minOccurs="0"/>
 				<xs:element ref="or:userAbsenceStartDate" minOccurs="0"/>
 				<xs:element ref="or:userAbsenceEndDate" minOccurs="0"/>
+				<xs:element ref="or:userBonPrintAsEmail" minOccurs="0"/>
+				<xs:element ref="or:userLetterLanguage" minOccurs="0"/>
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
@@ -1424,6 +1433,11 @@
 	<xs:element name="userLastName" type="xs:string">
 		<xs:annotation>
 			<xs:documentation xml:lang="en">User's family name</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="userLetterLanguage" type="xs:string">
+		<xs:annotation>
+			<xs:documentation xml:lang="en">Language of letters (Dansk or Engelsk)</xs:documentation>
 		</xs:annotation>
 	</xs:element>
 	<xs:element name="userMobilePhone" type="xs:integer">

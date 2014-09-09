@@ -23,6 +23,10 @@
          <!--Optional:-->
          <open:userAbsenceEndDate>?</open:userAbsenceEndDate>
          <!--Optional:-->
+         <open:userBonPrintAsEmail>?</open:userBonPrintAsEmail>
+         <!--Optional:-->
+         <open:userLetterLanguage>?</open:userLetterLanguage>
+         <!--Optional:-->
          <open:agencyCounter>?</open:agencyCounter>
          <!--Optional:-->
          <open:callback>?</open:callback>
