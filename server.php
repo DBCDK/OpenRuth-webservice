@@ -1118,6 +1118,10 @@ class openRuth extends webServiceServer {
               array('from' => 'BonPrintAsEmail', 'to' => 'userBonPrintAsEmail', 'bool' => 'y'),
               array('from' => 'LetterLanguageCode', 'to' => 'userLetterLanguage'));
             self::move_tags($loaner, $ui, $trans);
+            $trans = array(
+              array('from' => 'LanguageCode', 'to' => 'userLetterLanguageCode'));
+            foreach ($dom->getElementsByTagName('LetterLanguageCodes') as $codes)
+              self::move_tags($codes, $ui->userLetterLanguageCodes[]->_value, $trans);
 
         // fines
             $fi = &$res->userStatus->_value->fees->_value;

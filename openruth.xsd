@@ -1422,6 +1422,7 @@
 				<xs:element ref="or:userAbsenceEndDate" minOccurs="0"/>
 				<xs:element ref="or:userBonPrintAsEmail" minOccurs="0"/>
 				<xs:element ref="or:userLetterLanguage" minOccurs="0"/>
+				<xs:element ref="or:userLetterLanguageCodes" minOccurs="0"/>
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
@@ -1439,6 +1440,21 @@
 		<xs:annotation>
 			<xs:documentation xml:lang="en">Language of letters (Dansk or Engelsk)</xs:documentation>
 		</xs:annotation>
+	</xs:element>
+	<xs:element name="userLetterLanguageCode" type="xs:string">
+		<xs:annotation>
+			<xs:documentation xml:lang="en">Possible language code</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="userLetterLanguageCodes">
+		<xs:annotation>
+			<xs:documentation xml:lang="en">List of possible language codes</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="or:userLetterLanguageCode" minOccurs="0" maxOccurs="unbounded"/>
+			</xs:sequence>
+		</xs:complexType>
 	</xs:element>
 	<xs:element name="userMobilePhone" type="xs:integer">
 		<xs:annotation>
